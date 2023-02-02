@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
+import axios from './utils/axios'
 import { createRouter,createWebHashHistory } from 'vue-router'
 
 
@@ -13,11 +14,13 @@ const routes = [
     { path: '/train', component: import("@/components/ATC-Train") },
     { path: '/apply', component: import("@/components/ATC-Apply") },
     { path: '/moodle', component: (<script language="javascript" type="text/javascript">window.location.href="https://moodle.skylineflyleague.cn";</script>)}
-
 ]
+
 const router = createRouter({
     history: createWebHashHistory(),
     routes,
 })
 
-createApp(App).use(Antd).use(router).mount('#app')
+const app = createApp(App)
+app.use(Antd).use(router).mount('#app')
+app.config.globalProperties.$axios = axios

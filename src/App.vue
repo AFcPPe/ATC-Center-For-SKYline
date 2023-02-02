@@ -78,9 +78,7 @@ import {
   DisconnectOutlined
 } from '@ant-design/icons-vue';
 import {defineComponent, ref} from 'vue';
-
 export default defineComponent({
-
   components: {
     DashboardOutlined,
     CustomerServiceOutlined,

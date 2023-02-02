@@ -8,11 +8,17 @@
       <h1 style="font-size: 1.6rem">训练需求</h1>
       <h3 style="font-size: 0.8rem">如果您需要并且有时间参与训练，请在此提出和管理您的训练需求。注意，此处仅用于表达训练意向，提出训练需求不保证一定会得到满足。 教员将按照您提出的训练时间，结合个人安排决定最终训练时间。因此，为了让成功预约的可能性最大化，每个需求中允许最多提供五个可选时间段。 请尽量多提供一些时间以供选择。在训练时间最终确定前，您都可以修改您的训练需求。</h3>
       <a-divider />
-      <a-space>
-        <a-button type="primary"><PlusOutlined /> 新建需求</a-button>
-        <a-button><ReloadOutlined /> 刷新</a-button>
-        <RangePicker style="margin-left: 70rem;padding-right: 2rem"/>
-      </a-space>
+      <a-row justify="space-between">
+        <a-col :span="4">
+          <a-button type="primary"><PlusOutlined /> 新建需求 </a-button>
+          <a-button><ReloadOutlined /> 刷新</a-button>
+        </a-col>
+        <a-col :span="4"></a-col>
+        <a-col :span="4"></a-col>
+        <a-col :span="4"><RangePicker /></a-col>
+
+
+      </a-row>
 
       <br/>
       <br/>
@@ -67,8 +73,8 @@ const cols = [{
 
 const data = [{
   key:1,
-  applicant:<div><button type="button" className="ant-table-row-expand-icon ant-table-row-expand-icon-collapsed"
-                         aria-label="展开行" style="margin-right: 0.7rem"></button>Zhengyang Dou (1398)</div>,
+  applicant:<a-space> <div><button type="button" className="ant-table-row-expand-icon ant-table-row-expand-icon-collapsed"
+                         aria-label="展开行" style="margin-right: 0.7rem"></button>Zhengyang Dou (1398)</div></a-space>,
   startTime:"2022-07-12 16:35 UTC",
   endTime: "2022-09-26 15:59 UTC",
   status: "已被拒绝/无合适时间",
