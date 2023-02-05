@@ -2,7 +2,7 @@
   <a-layout style="min-height: 100vh">
     <a-layout-sider v-model:collapsed="collapsed" collapsible style="min-width: 500px">
       <div class="logo">
-        <img src="./assets/logo.svg">
+        <img src="./assets/logo.svg" style="padding-left: 5px;padding-right: 5px">
       </div>
 
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
@@ -11,22 +11,22 @@
           <router-link to="/dashboard"> 工作台</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">工作台</a></span>-->
         </a-menu-item>
-        <a-menu-item key="Activity">
+        <a-menu-item key="Activity" v-if="logon">
           <CustomerServiceOutlined style="color:#ffffff"/>
           <router-link to="/activity"> 活动</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">活动</a></span>-->
         </a-menu-item>
-        <a-menu-item key="Notice">
+        <a-menu-item key="Notice" v-if="logon">
           <NotificationOutlined style="color:#ffffff"/>
           <router-link to="/notice"> 公告</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">公告</a></span>-->
         </a-menu-item>
-        <a-menu-item key="Train">
+        <a-menu-item key="Train" v-if="logon">
           <CarryOutOutlined style="color:#ffffff"/>
           <router-link to="/train"> 训练需求</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">训练需求</a></span>-->
         </a-menu-item>
-        <a-menu-item key="Apply">
+        <a-menu-item key="Apply" v-if="logon">
           <ProfileOutlined style="color:#ffffff"/>
           <router-link to="/apply"> 管制员申请</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">管制员申请</a></span>-->
@@ -43,15 +43,18 @@
         <div class="ant-row" style="row-gap: 0px;">
           <div class="ant-col ant-col-24" style="padding: 0px 1.5rem; text-align: right;">
             <a-space>
+              <a-button type="primary" @click="jumpToLogin()" v-if="!logon"><login-outlined />登录</a-button>
               <a-select
                   ref="select"
-                  v-model:value="value1"
+                  v-model:value="loginData['Username']"
                   style="width: 120px"
                   @focus="focus"
                   @change="handleChange"
+                  v-if="logon"
               >
-                <a-select-option value="jack"><UserOutlined /> 个人中心</a-select-option>
-                <a-select-option value="lucy"><DisconnectOutlined /> 注销登录</a-select-option>
+                <a-select-option value="usercenter"><UserOutlined /> 个人中心</a-select-option>
+                <a-select-option value="logout"><DisconnectOutlined /> 注销登录</a-select-option>
+
               </a-select>
             </a-space>
           </div>
@@ -74,10 +77,13 @@ import {
   DashboardOutlined,
   NotificationOutlined,
   ProfileOutlined,
-  UserOutlined,
-  DisconnectOutlined
+  LoginOutlined
+  // UserOutlined,
+  // DisconnectOutlined
 } from '@ant-design/icons-vue';
 import {defineComponent, ref} from 'vue';
+import router from "@/utils/router";
+import checkLogin from "@/utils/CheckLogin";
 export default defineComponent({
   components: {
     DashboardOutlined,
@@ -86,8 +92,9 @@ export default defineComponent({
     ProfileOutlined,
     CarryOutOutlined,
     BookOutlined,
-    UserOutlined,
-    DisconnectOutlined
+    LoginOutlined
+    // UserOutlined,
+    // DisconnectOutlined
   },
   data() {
     return {
@@ -95,6 +102,33 @@ export default defineComponent({
       selectedKeys: ref(['1']),
     };
   },
+  setup(){
+    let loginData = checkLogin.check()
+    let logon = false
+    if(loginData!==undefined){
+      logon =true
+      router.push({path: '/',})
+    }
+    const jumpToLogin = function(){
+      router.push('/login')
+    }
+    const handleChange = function (value){
+      if(value=="usercenter"){
+        router.push({path: '/usercenter',})
+      }
+      if(value=="logout"){
+        localStorage.clear()
+        location.reload()
+      }
+    }
+    return{
+      jumpToLogin,
+      logon,
+      loginData,
+      handleChange
+    }
+  },
+
 });
 </script>
 <style>

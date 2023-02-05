@@ -20,16 +20,19 @@
       <br>
       <a-Card>
         <!--eslint-disable-next-line-->
-        <a-card hoverable style="width: 300px;float:left;margin: 2rem" v-for="each in EventList.list">
-          <template #cover>
-            <img alt="example" src="/img/ANNI.jpg" />
-          </template>
-          <a-card-meta>
-            <template #title>{{each['T']}}</template>
-            <template #description>{{each['Duration']}}</template>
-          </a-card-meta>
-        </a-card>
+        <div  v-for="each in EventList.list">
 
+          <a-card hoverable style="width: 300px;float:left;margin: 2rem"  v-if="each['title']!=''" @click="jumpToDetail(each)">
+            <template #cover>
+              <img :src="each['image'].replace('https://api.skylineflyleague.cn/','http://117.78.10.8:61846/')" style="height: 200px;width: 300px">
+
+            </template>
+            <a-card-meta>
+              <template #title>{{each['title']}}</template>
+              <template #description>{{each['duration']}}</template>
+            </a-card-meta>
+          </a-card>
+        </div>
         <div id = 'EventCards'></div>
       </a-Card>
     </div>
@@ -45,8 +48,10 @@ import {
 import {
   RangePicker
 } from 'ant-design-vue'
-import API from "@/utils/axios";
+import APIs from "@/utils/axios";
 import {reactive} from "vue";
+import router from "@/utils/router";
+
 export default {
   name: "ATC-Activity",
   components:{
@@ -54,21 +59,23 @@ export default {
     RangePicker,
   },
   setup(){
+
     let EventList = reactive({
       list:[]
     });
-    API({url:'/Center/EventList',method:'get'})
+    APIs.API({url:'atc_center_api/Controller/GetEventList.php',method:'get'})
         .then((res)=>{
-          EventList.list = res.data.data
 
+          EventList.list = res.data.data
         })
+    const jumpToDetail = function(data){
+      router.push({name:'detailedEvent',params:{id:data['id']}})
+    }
     return {
       EventList,
+      jumpToDetail
     }
-
-
   }
-
 }
 
 </script>
