@@ -10,8 +10,29 @@
       <a-divider />
       <a-row justify="space-between">
         <a-col :span="4">
-          <a-button type="primary"><PlusOutlined /> 新建需求 </a-button>
-          <a-button><ReloadOutlined /> 刷新</a-button>
+          <a-button type="primary" @click="showModal"><PlusOutlined /> 新建需求 </a-button>
+          <a-modal
+              v-model:visible="modalVisable"
+              title="创建训练计划"
+              :confirm-loading="confirmLoading"
+              @ok="sendForm"
+              :centered="true"
+              :width="525"
+              :destroyOnClose="true"
+          >
+            <a-form-item label="选择时间：" name="time">
+              <RangePicker v-model:value="formState.date" :showTime="true"/>
+            </a-form-item>
+            <a-form-item label="备注" name="remark">
+              <a-input v-model:value="formState.remark">
+                <template #prefix>
+                  <LockOutlined class="site-form-item-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+
+          </a-modal>
+          <a-button @click="refreshTrains"><ReloadOutlined /> 刷新</a-button>
         </a-col>
         <a-col :span="4"></a-col>
         <a-col :span="4"></a-col>
@@ -23,8 +44,12 @@
       <br/>
       <br/>
       <a-card>
-        <ATable :columns=cols :data-source=data>
-
+        <ATable :columns=cols :data-source=trainData.data>
+          <template #bodyCell="{ column, text, record }">
+            <template v-if="column.dataIndex==='action'">
+              <a-button @click="deleteReq(record.key-1)"><FileTextOutlined /> 删除</a-button>
+            </template>
+          </template>
         </ATable>
       </a-card>
     </div>
@@ -39,8 +64,15 @@ import {
 } from '@ant-design/icons-vue';
 
 import {
-  RangePicker
+  message,
+  RangePicker,
 } from 'ant-design-vue'
+import {reactive, ref} from "vue";
+import APIs from "@/utils/axios";
+import checkLogin from "@/utils/CheckLogin";
+import router from "@/utils/router";
+import ProfileOutlined from "@/App";
+import AES from "@/utils/AES";
 
 const cols = [{
   title: '学员',
@@ -70,52 +102,113 @@ const cols = [{
   key: 'action',
   dataIndex: 'action',
 }];
-
-const data = [{
-  key:1,
-  applicant:<a-space> <div><button type="button" className="ant-table-row-expand-icon ant-table-row-expand-icon-collapsed"
-                         aria-label="展开行" style="margin-right: 0.7rem"></button>Zhengyang Dou (1398)</div></a-space>,
-  startTime:"2022-07-12 16:35 UTC",
-  endTime: "2022-09-26 15:59 UTC",
-  status: "已被拒绝/无合适时间",
-  remark: "",
-  action: <div className="ant-space ant-space-horizontal ant-space-align-center" style="gap: 8px;">
-    <div className="ant-space-item" style="">
-      <button className="ant-btn ant-btn-sm" type="button"><a href="/applications/485" className=""><FileTextOutlined/> 查看训练
-      </a></button>
-    </div>
-    <div className="ant-space-item" style=""><span></span></div>
-    <div className="ant-space-item"><span></span></div></div>
-},
-  {
-    key:2,
-    applicant: <div><button type="button" className="ant-table-row-expand-icon ant-table-row-expand-icon-collapsed"
-              aria-label="展开行" style="margin-right: 0.7rem"></button>Zhengyang Dou (1398)</div>,
-    startTime:"2022-11-05 19:22 UTC",
-    endTime: "2023-01-17 20:26 UTC",
-    status: "已通过",
-    remark: "",
-    action: <div className="ant-space ant-space-horizontal ant-space-align-center" style="gap: 8px;">
-      <div className="ant-space-item" style="">
-        <button className="ant-btn ant-btn-sm" type="button"><a href="/applications/485" className=""><FileTextOutlined/> 查看训练
-        </a></button>
-      </div>
-      <div className="ant-space-item" style=""><span></span></div>
-      <div className="ant-space-item"><span></span></div></div>
-  }
-]
-
 export default {
   name: "ATC-Train",
   components: {
+    ProfileOutlined,
     ReloadOutlined,
     PlusOutlined,
-    RangePicker
+    RangePicker,
+    FileTextOutlined
   },
+
   setup() {
+    let trains = []
+    let trainData = reactive({
+      data: []
+    })
+    let loginData = checkLogin.check()
+    let logon = false
+    if(loginData==undefined){
+      localStorage.setItem('loginFirst','0')
+      router.push('/login')
+    }else{
+      logon = true
+    }
+
+    const refreshTrains=function () {
+        APIs.API({url:'atc_center_api/Controller/GetTRNRequestList.php',method:'get',params:{'cid':loginData['Username']}})
+            .then((res)=>{
+              if(res.data.code =='200'){
+                trainData.data=[]
+                trains = res.data.data
+                for(let i =0;i<trains.length;i++){
+                  let trainTableRow = {
+                    key:i+1,
+                    applicant: trains[i]['stu_id'],
+                    startTime:trains[i]['earliest_time'],
+                    endTime: trains[i]['latest_time'],
+                    status: "未查阅",
+                    remark: trains[i]['remark'],
+                  }
+                  trainData.data.push(trainTableRow)
+                }
+                message.success('刷新成功')
+              }else {
+                message.error('刷新失败')
+              }
+            })
+    }
+    const formState = reactive({
+      date: {},
+      remark: '',
+    });
+    const modalVisable = ref(false);
+    const confirmLoading = ref(false);
+    const showModal = function (){
+      modalVisable.value = true
+    }
+    const sendForm = function (){
+      APIs.API({
+        url:'atc_center_api/Controller/CreateTRNRequest.php',
+        method:'post',
+        data:{'stu_id':loginData['Username'],
+          'earliest_time':formState.date[0],
+          'latest_time':formState.date[1],
+          'remark':formState.remark
+
+        }}).then((res)=>{
+          if(res.data.code =='200'){
+            modalVisable.value=false
+            confirmLoading.value = false
+            refreshTrains()
+            message.success('创建成功')
+          }else {
+            message.error('创建失败')
+          }
+
+      })
+      confirmLoading.value=true
+    }
+    const deleteReq = function (id) {
+      let formdata = new FormData();
+      formdata.append('id',trains[id]['id'])
+      APIs.API({
+        url:'atc_center_api/Controller/DeleteTRNRequest.php',
+        method:'post',
+        data:formdata
+      }).then(
+          res=>{
+            if(res.data.code =='200'){
+              refreshTrains()
+              message.success('删除成功')
+            }else {
+              message.success('删除失败')
+            }
+          }
+      )
+    }
+    refreshTrains()
     return {
-      data,
+      confirmLoading,
+      sendForm,
+      showModal,
+      modalVisable,
+      trainData,
       cols,
+      formState,
+      deleteReq,
+      refreshTrains
     };
   },
 }

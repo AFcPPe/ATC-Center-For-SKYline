@@ -22,8 +22,21 @@
 </template>
 
 <script>
+import checkLogin from "@/utils/CheckLogin";
+import router from "@/utils/router";
+
 export default {
-  name: "ATC-Notice"
+  name: "ATC-Notice",
+  setup(){
+    let loginData = checkLogin.check()
+    let logon = false
+    if(loginData!==undefined){
+      logon =true
+    }else {
+      localStorage.setItem('loginFirst','0')
+      router.push('/login')
+    }
+  }
 }
 </script>
 

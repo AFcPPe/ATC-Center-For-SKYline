@@ -11,8 +11,20 @@
 
 <script>
 
+import {message} from "ant-design-vue";
+
 export default {
-  name: "ATC-index"
+  name: "ATC-index",
+  setup(){
+
+    let flag = localStorage.getItem('banFlag')
+    if(flag !==undefined ){
+      if(flag=='1'){
+        message.success('登录成功！')
+        localStorage.removeItem('banFlag')
+      }
+    }
+  }
 
 }
 </script>

@@ -1,11 +1,11 @@
 <template>
   <a-layout style="min-height: 100vh">
-    <a-layout-sider v-model:collapsed="collapsed" collapsible style="min-width: 500px">
+    <a-layout-sider v-model:collapsed="collapsed" collapsible style="min-width: 500px;" :collapsedWidth="0" :trigger="null">
       <div class="logo">
         <img src="./assets/logo.svg" style="padding-left: 5px;padding-right: 5px">
       </div>
 
-      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
+      <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" :inlineIndent="50">
         <a-menu-item key="DashBoard">
           <DashboardOutlined style="color:#ffffff"/>
           <router-link to="/dashboard"> 工作台</router-link>
@@ -40,27 +40,31 @@
     </a-layout-sider>
     <a-layout>
       <a-layout-header style="background: #fff; padding: 0">
-        <div class="ant-row" style="row-gap: 0px;">
-          <div class="ant-col ant-col-24" style="padding: 0px 1.5rem; text-align: right;">
-            <a-space>
-              <a-button type="primary" @click="jumpToLogin()" v-if="!logon"><login-outlined />登录</a-button>
-              <a-select
-                  ref="select"
-                  v-model:value="loginData['Username']"
-                  style="width: 120px"
-                  @focus="focus"
-                  @change="handleChange"
-                  v-if="logon"
-              >
-                <a-select-option value="usercenter"><UserOutlined /> 个人中心</a-select-option>
-                <a-select-option value="logout"><DisconnectOutlined /> 注销登录</a-select-option>
+        <a-row justify="space-between">
+          <a-col :span="4">
+            <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" style="padding-left: 15px;fontSize: 20px"/>
+            <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)"  style="padding-left: 15px;fontSize: 20px"/>
+          </a-col>
+          <a-col :span="4"></a-col>
+          <a-col :span="4"></a-col>
+          <a-col :span="2">
+            <a-button type="primary" @click="jumpToLogin()" v-if="!logon"><login-outlined />登录</a-button>
+            <a-select
+                ref="select"
+                v-model:value="loginData['Username']"
+                style="width: 120px"
+                @focus="focus"
+                @change="handleChange"
+                v-if="logon"
+            >
+              <a-select-option value="usercenter"><UserOutlined /> 个人中心</a-select-option>
+              <a-select-option value="logout"><DisconnectOutlined /> 注销登录</a-select-option>
 
-              </a-select>
-            </a-space>
-          </div>
-        </div>
+            </a-select>
+          </a-col>
+        </a-row>
       </a-layout-header>
-      <router-view></router-view>
+      <router-view style="overflow-x: auto;"></router-view>
       <a-layout-footer style="text-align: center">
         <div><a target="_blank" href="https://skylineflyleague.cn/">SKYline Flyleague</a>
           <div class="ant-divider ant-divider-vertical" role="separator"><!----></div>
@@ -77,7 +81,9 @@ import {
   DashboardOutlined,
   NotificationOutlined,
   ProfileOutlined,
-  LoginOutlined
+  LoginOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
   // UserOutlined,
   // DisconnectOutlined
 } from '@ant-design/icons-vue';
@@ -92,7 +98,9 @@ export default defineComponent({
     ProfileOutlined,
     CarryOutOutlined,
     BookOutlined,
-    LoginOutlined
+    LoginOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined
     // UserOutlined,
     // DisconnectOutlined
   },
@@ -107,7 +115,6 @@ export default defineComponent({
     let logon = false
     if(loginData!==undefined){
       logon =true
-      router.push({path: '/',})
     }
     const jumpToLogin = function(){
       router.push('/login')

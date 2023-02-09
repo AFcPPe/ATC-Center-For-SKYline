@@ -56,7 +56,7 @@ import APIs from "@/utils/axios";
 import router from "@/utils/router";
 import AES from "@/utils/AES";
 import checkLogin from "@/utils/CheckLogin";
-
+import { message } from 'ant-design-vue';
 export default {
   name: "ATC-Login",
   components: {
@@ -65,8 +65,11 @@ export default {
 
   setup() {
     if(checkLogin.check()!=undefined){
-      console.log()
       router.push({path: '/',})
+    }
+    if(localStorage.getItem('loginFirst')=='0'){
+      message.error('请先登录')
+      localStorage.removeItem('loginFirst')
     }
     const formState = reactive({
       username: '',
@@ -85,20 +88,25 @@ export default {
 
     const onSuccess = () => {
       onClose()
-      APIs.APILogin({url:'Center/Login',method:'post',params:{'username':formState.username,'password':formState.password},})
+      let formdata = new FormData();
+      formdata.append('username',formState.username)
+      formdata.append('password',formState.password)
+      APIs.APILogin({url:'Center/Login',method:'post',data:formdata})
           .then((res)=>{
+            console.log('data')
             if(res.data.code=='200'){
               localStorage.clear()
               let saveData = AES.encrypt(JSON.stringify(res.data.data))
               localStorage.setItem('loginData',saveData)
+              localStorage.setItem('banFlag','1')
               location.reload()
             }else {
-              console.log('failed')
+              message.error('登录失败');
             }
           })
           .catch(reason => {
             if(reason.code == 'ERR_NETWORK'){
-              console.log('接口寄了')
+              message.error('与服务器交互失败')
             }
           })
     };

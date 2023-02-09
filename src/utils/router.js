@@ -11,11 +11,15 @@ const routes = [
     { path: '/moodle', component: (<script language="javascript" type="text/javascript">window.location.href="https://moodle.skylineflyleague.cn";</script>)},
     { path: '/login', component: import("@/components/ATC-Login") },
     { path: '/activity/detail/:id', name:"detailedEvent",component: (import("@/components/InnerPages/Activity-Detail"))},
-    { path: '/usercenter', component: import("@/components/InnerPages/UserCenter/PersonalData") }
+    { path: '/apply/create', component: (import("@/components/InnerPages/Apply/Apply-Create"))},
+    { path: '/apply/read', component: (import("@/components/InnerPages/Apply/Apply-Read"))},
+    { path: '/usercenter', component: import("@/components/InnerPages/UserCenter/PersonalData") },
+    { path: '/apply/detail/:id', name:"detailedApply",component: (import("@/components/InnerPages/Apply/Apply-Detail"))},
 
 ]
 
 const router = createRouter({
+    mode:'hash',
     history: createWebHashHistory(),
     routes,
 })
