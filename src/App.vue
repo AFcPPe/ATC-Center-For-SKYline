@@ -46,21 +46,31 @@
             <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)"  style="padding-left: 15px;fontSize: 20px"/>
           </a-col>
           <a-col :span="4"></a-col>
-          <a-col :span="4"></a-col>
-          <a-col :span="2">
+          <a-col :span="2"></a-col>
+          <a-col :span="3">
             <a-button type="primary" @click="jumpToLogin()" v-if="!logon"><login-outlined />登录</a-button>
-            <a-select
-                ref="select"
-                v-model:value="loginData['Username']"
-                style="width: 120px"
-                @focus="focus"
-                @change="handleChange"
-                v-if="logon"
-            >
-              <a-select-option value="usercenter"><UserOutlined /> 个人中心</a-select-option>
-              <a-select-option value="logout"><DisconnectOutlined /> 注销登录</a-select-option>
+            <div >
+              <a-avatar
+                  size="large"
+                  :style="{verticalAlign: 'middle' }"
+                  :src="'/atcapi/efb/data/user_main_data/avatar/'+loginData['Username']+'.jpg'"
+                  v-if="logon"
+              >
+              </a-avatar>
 
-            </a-select>
+              <a-select
+                  ref="select"
+                  v-model:value="loginData['Username']"
+                  style="width: auto;padding-left: 10px;"
+                  @focus="focus"
+                  @change="handleChange"
+                  v-if="logon"
+              >
+                <a-select-option value="usercenter"><UserOutlined /> 个人中心</a-select-option>
+                <a-select-option value="logout"><DisconnectOutlined /> 注销登录</a-select-option>
+
+              </a-select>
+            </div>
           </a-col>
         </a-row>
       </a-layout-header>
@@ -125,7 +135,7 @@ export default defineComponent({
       }
       if(value=="logout"){
         localStorage.clear()
-        location.reload()
+        router.push('/login')
       }
     }
     return{

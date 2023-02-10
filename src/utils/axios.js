@@ -5,6 +5,11 @@ const API = axios.create({
     timeout: 20000
 })
 
+const LocalApi = axios.create({
+    baseURL: '/LocalApi/',
+    timeout: 20000
+})
+
 const APILogin = axios.create({
     baseURL: '/goApi/',
     timeout: 20000
@@ -49,4 +54,4 @@ const APILogin = axios.create({
 //     timeout: 10000
 // })
 
-export default {API,APILogin}
+export default {API,APILogin,LocalApi}

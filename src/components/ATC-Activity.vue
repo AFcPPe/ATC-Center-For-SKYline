@@ -24,7 +24,7 @@
 
           <a-card hoverable style="width: 300px;float:left;margin: 2rem"  v-if="each['title']!=''" @click="jumpToDetail(each)">
             <template #cover>
-              <img :src="each['image']" style="height: 200px;width: 300px">
+              <img :src="each['image'].replace('https://api.skylineflyleague.cn/','/atcapi/')" style="height: 200px;width: 300px">
 <!--              .replace('https://api.skylineflyleague.cn/','/atcapi/')-->
 <!--              .replace('https://api.skylineflyleague.cn/','http://117.78.10.8:61846/')-->
             </template>
@@ -74,7 +74,7 @@ export default {
       loading:true
     })
     let wholeDate=[]
-    let initDate = [dayjs(Date.now()-604800),dayjs((Date.now()+604800*1000))]
+    let initDate = [dayjs(Date.now()-604800),dayjs((Date.now()+604800*1000*3))]
     const dateChange=function (dates) {
       initDate = dates
       EventList.list = wholeDate

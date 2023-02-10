@@ -7,7 +7,7 @@
       <a-breadcrumb-item style="color: gray">
         <router-link to="/apply">管制员申请</router-link>
       </a-breadcrumb-item>
-      <a-breadcrumb-item style="color: dodgerblue">提交申请</a-breadcrumb-item>
+      <a-breadcrumb-item style="color: dodgerblue">查看申请</a-breadcrumb-item>
     </a-breadcrumb>
     <div :style="{ padding: '24px', background: '#fff', minHeight: '360px'}">
       <a-steps :current="parseInt(data.list['progress'])+1">

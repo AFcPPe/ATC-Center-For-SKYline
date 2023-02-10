@@ -8,15 +8,15 @@
       <h1 style="font-size: 1.6rem">你好，{{loginData['Username']}}，看看你还有什么b事没干！</h1>
       <h5 style="font-size: 0.9rem">你今天上管了吗？太久不上线是要回炉的哦！</h5>
       <a-Card>
-        <template #title><div style="font-weight: bold;font-size: 1.1rem;color: darkred">即将进行的活动</div></template>
+        <template #title><div style="font-weight: bold;font-size: 1.1rem;color: darkred">最近的活动</div></template>
         <template #extra><router-link to="/Activity">更多</router-link></template>
 
         <!--eslint-disable-next-line-->
-        <div  v-for="each in EventList.list.slice(0, 4)">
+        <div v-for="each in EventList.list.slice(0, 4)">
 
           <a-card hoverable style="width: 300px;float:left;margin: 2rem"  v-if="each['title']!=''" @click="jumpToDetail(each)">
             <template #cover>
-              <img :src="each['image']" style="height: 200px;width: 300px">
+              <img :src="each['image'].replace('https://api.skylineflyleague.cn/','/atcapi/')" style="height: 200px;width: 300px">
 
             </template>
             <a-card-meta>

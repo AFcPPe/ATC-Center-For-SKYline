@@ -17,7 +17,7 @@
           <p style="font-size: 1.5rem">{{data.list['route']}}</p>
         </a-col>
         <a-col>
-          <img :src="('https://api.skylineflyleague.cn/upload/activity/cover_'+eventID+'.jpg')" style="width: 500px;height: 300px">
+          <img :src="'/atcapi/upload/activity/cover_'+eventID+'.jpg'" style="width: 500px;height: 300px">
         </a-col>
       </a-row>
       <br>
