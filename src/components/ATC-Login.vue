@@ -89,6 +89,9 @@ export default {
     const onSuccess = () => {
       onClose()
       let formdata = new FormData();
+      if(formState.username==""||formState.password==""){
+        return false
+      }
       formdata.append('username',formState.username)
       formdata.append('password',formState.password)
       APIs.APILogin({url:'Center/Login',method:'post',data:formdata})

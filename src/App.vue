@@ -11,6 +11,11 @@
           <router-link to="/dashboard"> 工作台</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">工作台</a></span>-->
         </a-menu-item>
+        <a-menu-item key="List">
+          <DashboardOutlined style="color:#ffffff"/>
+          <router-link to="/list"> 管制员列表</router-link>
+          <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">工作台</a></span>-->
+        </a-menu-item>
         <a-menu-item key="Activity" v-if="logon">
           <CustomerServiceOutlined style="color:#ffffff"/>
           <router-link to="/activity"> 活动</router-link>
@@ -21,7 +26,7 @@
           <router-link to="/notice"> 公告</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">公告</a></span>-->
         </a-menu-item>
-        <a-menu-item key="Train" v-if="logon">
+        <a-menu-item key="Train" v-if="logon&&judge.student">
           <CarryOutOutlined style="color:#ffffff"/>
           <router-link to="/train"> 训练需求</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">训练需求</a></span>-->
@@ -30,6 +35,16 @@
           <ProfileOutlined style="color:#ffffff"/>
           <router-link to="/apply"> 管制员申请</router-link>
 <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">管制员申请</a></span>-->
+        </a-menu-item>
+        <a-menu-item key="Teacher" v-if="logon&&judge.teacher">
+          <team-outlined style="color:#ffffff"/>
+          <router-link to="/teacher"> 教员面板</router-link>
+          <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">管制员申请</a></span>-->
+        </a-menu-item>
+        <a-menu-item key="Admin" v-if="logon&&judge.adm">
+          <team-outlined style="color:#ffffff"/>
+          <router-link to="/admin"> 管理面板</router-link>
+          <!--          <span><a target="_blank" href="https://skylineflyleague.cn/" style="color:#ffffff">管制员申请</a></span>-->
         </a-menu-item>
         <a-menu-item key="Moodle">
           <BookOutlined style="color:#ffffff"/>
@@ -57,7 +72,6 @@
                   v-if="logon"
               >
               </a-avatar>
-
               <a-select
                   ref="select"
                   v-model:value="loginData['Username']"
@@ -74,7 +88,7 @@
           </a-col>
         </a-row>
       </a-layout-header>
-      <router-view style="overflow-x: auto;"></router-view>
+      <router-view style="overflow-x: auto;" v-if="!logon||!(userdata.data.Name==undefined ||userdata.data.Name==''||userdata.data.Email==undefined||userdata.data.Email=='')"></router-view>
       <a-layout-footer style="text-align: center">
         <div><a target="_blank" href="https://skylineflyleague.cn/">SKYline Flyleague</a>
           <div class="ant-divider ant-divider-vertical" role="separator"><!----></div>
@@ -82,6 +96,32 @@
       </a-layout-footer>
     </a-layout>
   </a-layout>
+  <a-modal
+    v-model:visible="modalVisable"
+    title="请先完善个人信息"
+    :confirm-loading="confirmLoading"
+    @ok="sendForm"
+    :centered="true"
+    :width="525"
+    :destroyOnClose="true"
+    :keyboard="false"
+    :closable="false"
+    :maskClosable="false"
+    cancelText=" "
+  >
+
+    <a-form-item label="真实姓名（拼音）：" name="name">
+      <a-input v-model:value="formState.name">
+      </a-input>
+    </a-form-item>
+    <a-form-item label="邮箱：" name="email">
+      <a-input v-model:value="formState.email">
+      </a-input>
+    </a-form-item>
+    <br>
+    <div>警告：这是您唯一一次填写信息的机会，如果后期您不能给出足够证据证明这是你的真实信息，你的管制员申请会被拒绝。</div>
+
+  </a-modal>
 </template>
 <script>
 import {
@@ -93,13 +133,16 @@ import {
   ProfileOutlined,
   LoginOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  TeamOutlined,
   // UserOutlined,
   // DisconnectOutlined
 } from '@ant-design/icons-vue';
-import {defineComponent, ref} from 'vue';
+import {defineComponent, reactive, ref} from 'vue';
 import router from "@/utils/router";
 import checkLogin from "@/utils/CheckLogin";
+import APIs from "@/utils/axios"
+import {message} from "ant-design-vue";
 export default defineComponent({
   components: {
     DashboardOutlined,
@@ -110,7 +153,8 @@ export default defineComponent({
     BookOutlined,
     LoginOutlined,
     MenuFoldOutlined,
-    MenuUnfoldOutlined
+    MenuUnfoldOutlined,
+    TeamOutlined,
     // UserOutlined,
     // DisconnectOutlined
   },
@@ -121,10 +165,51 @@ export default defineComponent({
     };
   },
   setup(){
+    const modalVisable = ref(false);
+    const confirmLoading = ref(false);
+    const formState = reactive({
+      name: '',
+      email: '',
+    });
+    const showModal = function (){
+      modalVisable.value = true
+    }
     let loginData = checkLogin.check()
+    let userdata=reactive({data:{}})
     let logon = false
+    const judge = reactive({
+      teacher : false,
+      adm : false,
+      student:false
+    })
     if(loginData!==undefined){
       logon =true
+      APIs.LocalApi({
+        url:'user',
+        method:'get',
+        params:{cid:loginData.Username}
+
+      }).then(res=>{
+        userdata.data = res.data
+        if(userdata.data.Name==undefined ||userdata.data.Name==''||userdata.data.Email==undefined||userdata.data.Email==''){
+          showModal()
+        }
+        for(let e in userdata.data['Group']){
+          if(userdata.data['Group'][e]['id']==14){
+            judge.teacher=true
+          }
+          if(userdata.data['Group'][e]['id']==15){
+            judge.teacher=true
+          }
+          if(userdata.data['Group'][e]['id']==13){
+            judge.adm=true
+          }
+          if(userdata.data['Group'][e]['id']==11){
+            judge.student=true
+          }
+
+        }
+      })
     }
     const jumpToLogin = function(){
       router.push('/login')
@@ -136,13 +221,42 @@ export default defineComponent({
       if(value=="logout"){
         localStorage.clear()
         router.push('/login')
+        location.reload()
       }
+    }
+    const sendForm = function (){
+      userdata.data.Name = formState.name
+      userdata.data.Email = formState.email
+      confirmLoading.value=true
+      APIs.LocalApi({
+        url:'changeUserData',
+        method:'post',
+        data:{'cid':loginData['Username'],
+          data:userdata.data
+        }}).then((res)=>{
+        if(res.status==200){
+          modalVisable.value=false
+          confirmLoading.value = false
+          location.reload()
+        }else {
+          confirmLoading.value = false
+          location.reload()
+        }
+      })
+      confirmLoading.value=true
     }
     return{
       jumpToLogin,
       logon,
       loginData,
-      handleChange
+      handleChange,
+      userdata,
+      modalVisable,
+      confirmLoading,
+      showModal,
+      formState,
+      sendForm,
+      judge
     }
   },
 

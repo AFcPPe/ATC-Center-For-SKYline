@@ -47,6 +47,9 @@
         <ATable :columns=cols :data-source=trainData.data>
           <template #bodyCell="{ column, text, record }">
             <template v-if="column.dataIndex==='action'">
+              <a-button @click="checkTrain(record.key-1)"><FileTextOutlined /> 查看</a-button>
+            </template>
+            <template v-if="column.dataIndex==='action'&&record.status=='未查阅'">
               <a-button @click="deleteReq(record.key-1)"><FileTextOutlined /> 删除</a-button>
             </template>
           </template>
@@ -127,27 +130,37 @@ export default {
     }
 
     const refreshTrains=function () {
-        APIs.API({url:'atc_center_api/Controller/GetTRNRequestList.php',method:'get',params:{'cid':loginData['Username']}})
-            .then((res)=>{
-              if(res.data.code =='200'){
-                trainData.data=[]
-                trains = res.data.data
-                for(let i =0;i<trains.length;i++){
-                  let trainTableRow = {
-                    key:i+1,
-                    applicant: trains[i]['stu_id'],
-                    startTime:trains[i]['earliest_time'],
-                    endTime: trains[i]['latest_time'],
-                    status: "未查阅",
-                    remark: trains[i]['remark'],
-                  }
-                  trainData.data.push(trainTableRow)
+      APIs.LocalApi({url:'getUserTrains',method:'get',params:{'cid':loginData['Username']}})
+          .then((res)=>{
+            if(res.status == 200){
+              trains = res.data
+              trainData.data=[]
+              for(let i =0;i<trains.length;i++) {
+                let stat = "未查阅"
+                if(trains[i]['progress']==0){
+                  stat = "未查阅"
+                }else if(trains[i]['progress']==1){
+                  stat = "已创建训练\n时间："+trains[i]['train_time']+'\n教员：'+trains[i]['ins_id']+'\n内容：'+trains[i]['content']
                 }
-                message.success('刷新成功')
-              }else {
-                message.error('刷新失败')
+                let trainTableRow = {
+                  key: i + 1,
+                  applicant: trains[i]['stu_id'],
+                  startTime: trains[i]['start'],
+                  endTime: trains[i]['end'],
+                  status: stat,
+                  remark: trains[i]['remark'],
+                }
+                trainData.data.push(trainTableRow)
               }
-            })
+              message.success('刷新成功')
+            }else {
+              message.error('刷新失败')
+            }
+          })
+    }
+    const checkTrain = function (id) {
+      router.push('/train/detail/'+trains[id]['id'])
+
     }
     const formState = reactive({
       date: {},
@@ -158,48 +171,68 @@ export default {
     const showModal = function (){
       modalVisable.value = true
     }
+
+
     const sendForm = function (){
-      APIs.API({
-        url:'atc_center_api/Controller/CreateTRNRequest.php',
+      let t1 = JSON.stringify(formState.date[0].add(8,'hour'))
+      let t2 = JSON.stringify(formState.date[1].add(8,'hour'))
+      confirmLoading.value=true
+      APIs.LocalApi({
+        url:'createTrain',
         method:'post',
         data:{'stu_id':loginData['Username'],
-          'earliest_time':formState.date[0],
-          'latest_time':formState.date[1],
+          'start':t1.substring(1,11)+' '+ t1.substring(12,20),
+          'end':t2.substring(1,11)+' '+ t2.substring(12,20),
           'remark':formState.remark
-
         }}).then((res)=>{
-          if(res.data.code =='200'){
+          if(res.status==200){
             modalVisable.value=false
             confirmLoading.value = false
             refreshTrains()
             message.success('创建成功')
           }else {
+            confirmLoading.value = false
             message.error('创建失败')
           }
-
       })
       confirmLoading.value=true
     }
     const deleteReq = function (id) {
-      let formdata = new FormData();
-      formdata.append('id',trains[id]['id'])
-      APIs.API({
-        url:'atc_center_api/Controller/DeleteTRNRequest.php',
+      console.log(trains[id])
+      APIs.LocalApi({
+        url:'deleteTrain',
         method:'post',
-        data:formdata
+        data:{
+          'id':trains[id]['id']
+        }
       }).then(
-          res=>{
-            if(res.data.code =='200'){
-              refreshTrains()
-              message.success('删除成功')
-            }else {
-              message.success('删除失败')
-            }
+        res=>{
+          if(res.status =='200'){
+            refreshTrains()
+            message.success('删除成功')
+          }else {
+            message.success('删除失败')
           }
+        }
       )
+      // APIs.API({
+      //   url:'atc_center_api/Controller/DeleteTRNRequest.php',
+      //   method:'post',
+      //   data:formdata
+      // }).then(
+      //     res=>{
+      //       if(res.data.code =='200'){
+      //         refreshTrains()
+      //         message.success('删除成功')
+      //       }else {
+      //         message.success('删除失败')
+      //       }
+      //     }
+      // )
     }
     refreshTrains()
     return {
+      checkTrain,
       confirmLoading,
       sendForm,
       showModal,

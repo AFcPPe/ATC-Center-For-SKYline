@@ -134,13 +134,19 @@ export default {
         'language_skill':'',
         'pilot_exp':'',
         'expect':'',
-        'stu_id':loginData['Username']}
-
+        'stu_id':loginData['Username'],
+        'pilottime':loginData['Pilottime']
+      },
     });
     const onSubmitClick = function () {
-      APIs.API({url:'atc_center_api/Controller/CreateATCRequest.php',method:'post',data:formState.list})
+      if(loginData==undefined||loginData['Pilottime']==undefined||loginData['Pilottime']/3600<45){
+        message.error('提交失败，因为你的连飞时长小于45小时')
+        router.push('/apply')
+        return
+      }
+      APIs.LocalApi({url:'createApply',method:'post',data:formState.list})
           .then((res)=>{
-            if(res.data.code =='200'){
+            if(res.status =='200'){
               message.success('提交成功')
               router.push('/apply')
             }else {

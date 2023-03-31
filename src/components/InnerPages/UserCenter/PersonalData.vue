@@ -45,8 +45,16 @@
             </a-row>
           </a-card>
         </a-tab-pane>
-        <a-tab-pane key="2" tab="Tab 2">Content of Tab 2</a-tab-pane>
-        <a-tab-pane key="3" tab="Tab 3">Content of Tab 3</a-tab-pane>
+        <a-tab-pane key="2" tab="用户组">
+          <a-card>
+            <template #title>
+              <div style="font-weight: bold;color: darkred">用户组</div>
+            </template>
+            <a-tag color="blue" v-for="each in userGroup.list">
+              {{each['name']}}
+            </a-tag>
+          </a-card>
+        </a-tab-pane>
       </a-tabs>
     </div>
   </a-layout-content>
@@ -57,6 +65,7 @@
 import checkLogin from "@/utils/CheckLogin";
 import router from "@/utils/router";
 import APIS from "@/utils/axios"
+import {reactive} from "vue";
 
 export default {
   name: "PersonalData",
@@ -70,15 +79,19 @@ export default {
       localStorage.setItem('loginFirst', '0')
       router.push('/login')
     }
-    APIS.LocalApi({url:'UserGroup',method:'get',params:{'cid':loginData['Username']}})
-        .then((res)=>{
-        console.log(res)
+    let userGroup = reactive({
+      list:[]
     })
+    APIS.LocalApi({url:'user',method:'get',params:{'cid':loginData['Username']}})
+        .then((res)=>{
+          userGroup.list=res.data.Group
+    });
     const rating = ['已封禁', 'OBS', 'S1', 'S2', 'S3', 'C1', 'C2', 'C3', 'I1', 'I2', 'I3', 'SUP', 'ADM']
     return {
       loginData,
       logon,
-      rating
+      rating,
+      userGroup
     }
   }
 }

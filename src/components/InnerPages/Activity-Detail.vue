@@ -17,7 +17,7 @@
           <p style="font-size: 1.5rem">{{data.list['route']}}</p>
         </a-col>
         <a-col>
-          <img :src="'/atcapi/upload/activity/cover_'+eventID+'.jpg'" style="width: 500px;height: 300px">
+          <img :src="'/images/cover_'+eventID+'.jpg'" style="width: 500px;height: 300px">
         </a-col>
       </a-row>
       <br>
@@ -31,8 +31,8 @@
               </template>
               <template v-if="column.key==='action'">
                 <a-button type="primary" disabled v-if="record.datas.status!='0'&&record.datas.status!=cid"><lock-outlined />{{record.datas.status}}</a-button>
-                <a-button type="primary" v-if="record.datas.status=='0'&&level>=record.datas.rating" @click="submitPre(record.datas)">立即预约</a-button>
-                <a-button type="primary" disabled v-if="record.datas.status=='0'&&level<record.datas.rating"><lock-outlined />锁定</a-button>
+                <a-button type="primary" v-if="record.datas.status=='0'&&record.datas.avail" @click="submitPre(record.datas)">立即预约</a-button>
+                <a-button type="primary" disabled v-if="record.datas.status=='0'&&!record.datas.avail"><lock-outlined />锁定</a-button>
                 <a-button type="primary" v-if="record.datas.status==cid" danger @click="submitCancel(record.datas)">取消</a-button>
               </template>
             </template>
@@ -105,7 +105,7 @@ export default {
       router.push('/login')
     }
     const submitPre = function (data) {
-      if(level>=parseInt(data.rating)){
+      if(data.avail){
         let formdata = new FormData();
         formdata.append('id',router.currentRoute.value.params.id)
         formdata.append('cid',cid)
@@ -129,7 +129,6 @@ export default {
       }
     }
     const submitCancel = function (data) {
-      console.log(data)
       let formdata = new FormData();
       formdata.append('id',router.currentRoute.value.params.id)
       formdata.append('atc',data.name)
@@ -164,11 +163,18 @@ export default {
     let ATCTypes = reactive({
       types:[]
     })
+    let user = reactive({
+      data:[]
+    })
+
     APIs.API({url:'atc_center_api/Controller/GetEventInfo.php',method:'get',params:{id:router.currentRoute.value.params.id}})
         .then((res)=>{
           data.list=res.data.data
         })
     const reloadBooking = function (){
+      APIs.LocalApi({url:'user',method:'get',params:{cid:cid}})
+          .then((res)=>{
+            user.data = res.data
       APIs.API({url:'atc_center_api/Controller/GetEventBooking.php',method:'get',params:{'id':router.currentRoute.value.params.id}})
           .then((res)=>{
             ATCTypes.types=[]
@@ -178,6 +184,28 @@ export default {
             let TWRs = {}
             let OTHERs = []
             for(let each in booking){
+              if(booking[each]['rating']==2){
+                booking[each]['id']=[3,8]
+              }else if(booking[each]['rating']==3){
+                booking[each]['id']=[8]
+              }else if(booking[each]['rating']==4){
+                booking[each]['id']=[4,9]
+              }else if(booking[each]['rating']==5){
+                booking[each]['id']=[9]
+              }else if(booking[each]['rating']==6){
+                booking[each]['id']=[5,10]
+              }else if(booking[each]['rating']==7){
+                booking[each]['id']=[10]
+              }
+              booking[each]['avail']=false
+              for(let e in user.data['Group']){
+                for(let h in booking[each]['id']){
+                  if(user.data['Group'][e]['id']==booking[each]['id'][h]){
+                    booking[each]['avail']=true
+                  }
+                }
+
+              }
               if(booking[each]['type']=='3'){
                 CTRs.push(booking[each])
               }else if(booking[each]['type']=='2'){
@@ -248,6 +276,7 @@ export default {
               ATC.list['OTHER'].push(OTHERsRow)
             }
             ATCTypes.types.push({key:++num,seat:'备份席位',seats:ATC.list['OTHER']})
+          })
           })
     }
     reloadBooking()

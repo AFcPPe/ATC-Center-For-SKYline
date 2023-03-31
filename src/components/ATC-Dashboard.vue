@@ -16,7 +16,7 @@
 
           <a-card hoverable style="width: 300px;float:left;margin: 2rem"  v-if="each['title']!=''" @click="jumpToDetail(each)">
             <template #cover>
-              <img :src="each['image'].replace('https://api.skylineflyleague.cn/','/atcapi/')" style="height: 200px;width: 300px">
+              <img :src="'images/cover_'+each['id']+'.jpg'" style="height: 200px;width: 300px">
 
             </template>
             <a-card-meta>

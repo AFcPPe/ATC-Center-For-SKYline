@@ -10,7 +10,7 @@
       <a-breadcrumb-item style="color: dodgerblue">查看申请</a-breadcrumb-item>
     </a-breadcrumb>
     <div :style="{ padding: '24px', background: '#fff', minHeight: '360px'}">
-      <a-steps :current="parseInt(data.list['progress'])+1">
+      <a-steps :current="Math.abs(parseInt(data.list['progress']))+1" :status="data.list['status']">
         <a-step>
           <!-- <span slot="title">Finished</span> -->
           <template #title>阅读</template>
@@ -78,18 +78,50 @@
             <a-form-item label="飞行经历" name="pilot_exp" :rules="[{required:true,message:'请填写飞行经历'}]">
               <div>{{ data.list['pilot_exp'] }}</div>
             </a-form-item>
+            <a-form-item label="飞行时长" name="pilot_time" :rules="[{required:true,message:'请填写飞行时长'}]">
+              <div>{{ parseInt(parseInt(data.list['pilottime'])/3600) }} 小时</div>
+            </a-form-item>
             <a-form-item label="期望收获" name="expect" :rules="[{required:true,message:'请填写期望收获'}]">
               <div>{{ data.list['expect'] }}</div>
+            </a-form-item>
+            <a-form-item label="面试时间" name="interviewTime" v-if="data.list['progress']==2||data.list['progress']==3">
+              <div>{{ data.list['interviewTime'] }}</div>
+            </a-form-item>
+            <a-form-item label="面试教员" name="applier" v-if="data.list['progress']==2||data.list['progress']==3">
+              <div>{{ data.list['applier'] }}</div>
             </a-form-item>
           </a-form>
         </a-col>
         <a-col span="1"></a-col>
       </a-row>
-
+      <a-row justify="space-between" v-if="loginData['Level']==12&&data.list['progress']==1">
+        <a-col :span="4"></a-col>
+        <a-col :span="4"><a-button type="primary" @click="showModal">同意</a-button></a-col>
+        <a-col :span="4"><a-button @click="reject">拒绝</a-button></a-col>
+        <a-col :span="4"></a-col>
+      </a-row>
 
     </div>
 
   </a-layout-content>
+  <a-modal
+      v-model:visible="modalVisable"
+      title="审批管制员申请"
+      :confirm-loading="confirmLoading"
+      @ok="sendForm"
+      :centered="true"
+      :width="525"
+      :destroyOnClose="true"
+  >
+    <a-form-item label="选择面试时间：" name="time">
+      <a-date-picker show-time placeholder="选择时间" v-model:value="formState.date"/>
+      <!--      <RangePicker v-model:value="formState.date" :showTime="true"/>-->
+    </a-form-item>
+    <a-form-item label="面试人" name="content">
+      <a-input v-model:value="formState.applier">
+      </a-input>
+    </a-form-item>
+  </a-modal>
 </template>
 
 <script>
@@ -97,7 +129,8 @@ import checkLogin from "@/utils/CheckLogin";
 import router from "@/utils/router";
 import APIs from "@/utils/axios";
 import {message} from "ant-design-vue";
-import {reactive} from "vue";
+import {reactive, ref} from "vue";
+import dayjs from "dayjs";
 
 export default {
   name: "Apply-Detail",
@@ -113,23 +146,84 @@ export default {
     let data = reactive({
       list: {}
     })
-    APIs.API({
-      url: 'atc_center_api/Controller/GetATCRequest.php',
+    APIs.LocalApi({
+      url: 'getApply',
       method: 'get',
       params: {'id': router.currentRoute.value.params.id}
     })
         .then((res) => {
-          if (res.data.code == '200') {
+          if (res.status == '200') {
             message.success('获取信息成功')
-            data.list = res.data.data
+            data.list = res.data
+            if(data.list['progress']==-1){
+              data.list['status'] = 'error'
+            }else if(data.list['progress']==-2){
+              data.list['status'] = 'error'
+            }else if(data.list['progress']==3){
+              data.list['status'] ='final'
+            }else{
+              data.list['status'] = 'process'
+            }
             console.log(data.list)
           } else {
             message.error('获取信息失败，请刷新')
           }
         })
-
+    const modalVisable = ref(false);
+    const confirmLoading = ref(false);
+    const formState = reactive({
+      date: dayjs(Date.now()),
+      applier: '',
+    });
+    const sendForm = function (){
+      confirmLoading.value = true
+      let time = JSON.stringify(formState.date.add(8,'hour')).slice(1,11)+' '+JSON.stringify(formState.date.add(8,'hour')).slice(12,17)
+      APIs.LocalApi({
+        url:'acceptApply',
+        method:'post',
+        data:{
+          id:router.currentRoute.value.params.id,
+          time:time,
+          applier:formState.applier
+        },
+      }).then(res=>{
+        if(res.status==200){
+          modalVisable.value=false
+          confirmLoading.value = false
+          message.success('提交成功')
+        }else {
+          confirmLoading.value = false
+          message.error('提交失败')
+        }
+      })
+    }
+    const reject = function (){
+      APIs.LocalApi({
+        url:'refuseApply',
+        method:'post',
+        data:{
+          id:router.currentRoute.value.params.id,
+        },
+      }).then(res=>{
+        if(res.status==200){
+          message.success('提交成功')
+        }else {
+          message.error('提交失败')
+        }
+      })
+    }
+    const showModal = function () {
+      modalVisable.value=true
+    }
     return {
-      data
+      data,
+      loginData,
+      modalVisable,
+      confirmLoading,
+      showModal,
+      reject,
+      sendForm,
+      formState
     }
 
 

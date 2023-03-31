@@ -65,7 +65,7 @@
             <a-typography-paragraph>
               首先，你必须具备一定的基本飞行知识。我们不推荐新手，或者连飞不太了解的学 习 ATC，因为你对飞行不熟悉在管制中会造成部分影响。我们将以飞行员中心的飞行时间作为评判标准。
             </a-typography-paragraph>
-            <a-typography-text type="danger">申请管制学习时需在本平台具有 25 小时连飞时长</a-typography-text>
+            <a-typography-text type="danger">申请管制学习时需在本平台具有 45 小时连飞时长</a-typography-text>
             <a-typography-title>
               2. 英文要求
             </a-typography-title>

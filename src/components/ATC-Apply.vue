@@ -78,23 +78,22 @@ export default {
       list:[]
     })
     const refreshApplies=function () {
-      APIs.API({url:'atc_center_api/Controller/GetATCRequestList.php',method:'get',params:{'cid':loginData['Username']}})
+      APIs.LocalApi({url:'getUserApply',method:'get',params:{'cid':loginData['Username']}})
           .then((res)=>{
-            if(res.data.code =='200'){
+            if(res.status == 200){
               ApplyData.list=[]
-              let gData = res.data.data
+              let gData = res.data
               for(let i =0;i<gData.length;i++){
                 let stat = '未查阅'
-                if(gData[i]['progress']=='1'){
+                if(gData[i]['progress']==1){
                   stat = '未查阅'
-                }else if(gData[i]['progress']=='2'){
+                }else if(gData[i]['progress']==2){
                   stat = '已通过'
-                }else if(gData[i]['progress']=='3'){
+                }else if(gData[i]['progress']==3){
                   stat = '已通过'
-                }else if(gData[i]['progress']=='-1'){
-                  stat = stat = '已拒绝'
+                }else if(gData[i]['progress']==-1||gData[i]['progress']==-2){
+                  stat = '已拒绝'
                 }
-
                 let singleData = {
                   key:i+2,
                   applicant:gData[i]['realname']+ ' (' + gData[i]['stu_id']+')',
@@ -115,11 +114,9 @@ export default {
       router.push({name:'detailedApply',params:{id:id}})
     }
     const deleteApply = function (id){
-      let formdata = new FormData();
-      formdata.append('id',id)
-      APIs.API({url:'atc_center_api/Controller/DeleteATCRequest.php',method:'post',data:formdata})
+      APIs.LocalApi({url:'deleteApply',method:'post',data: {id:id}})
           .then(res=>{
-            if(res.data.code =='200'){
+            if(res.status =='200'){
               message.success('删除成功')
               refreshApplies()
             }
@@ -127,6 +124,16 @@ export default {
               message.error('删除失败')
             }
           })
+      // APIs.API({url:'atc_center_api/Controller/DeleteATCRequest.php',method:'post',data:formdata})
+      //     .then(res=>{
+      //       if(res.data.code =='200'){
+      //         message.success('删除成功')
+      //         refreshApplies()
+      //       }
+      //       else {
+      //         message.error('删除失败')
+      //       }
+      //     })
     }
     refreshApplies()
     return {
