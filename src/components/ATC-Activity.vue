@@ -62,12 +62,20 @@ export default {
     RangePicker,
   },
   setup(){
-    let loginData = checkLogin.check()
-    let logon = false
+    let asData = reactive({
+      EventList:[],
+      logon:false,
+      displayName:'未登录',
+      cid:'',
+      email:'',
+      groups:[]
+    });
+    let loginData = checkLogin.getLoginStatus()
     if(loginData!==undefined){
-      logon =true
+      asData.logon =true
+      asData.cid = loginData['Username']
+
     }else {
-      localStorage.setItem('loginFirst','0')
       router.push('/login')
     }
     let loading = reactive({

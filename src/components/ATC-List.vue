@@ -24,6 +24,7 @@
 import {reactive} from "vue";
 import APIs from "@/utils/axios";
 import router from "@/utils/router";
+import AES from "@/utils/AES"
 const columns = [{
   title: 'CID',
   dataIndex: 'CID',
@@ -59,15 +60,15 @@ export default {
     const dataSource = reactive({
       data:[]
     })
-    APIs.LocalApi({url:'getAllUsers',method:"get"})
+    APIs.LocalApi({url:'getAllUser',method:"post",data:AES.encryptReq({randomNum:Math.random()*156153561})})
         .then(res=>{
-          if(res.status==200){
-            let lo = res.data
+          if(res.data.code==200){
+            let lo = res.data.data
             for(let each in lo){
               let newData = {
-                key:each,
-                CID:each,
-                name:lo[each]['Name'],
+                key:lo[each]['cid'],
+                CID:lo[each]['cid'],
+                name:lo[each]['name'],
                 DEL:'×',
                 GND:'×',
                 TWR:'×',
@@ -75,8 +76,10 @@ export default {
                 CTR:'×',
                 display:false,
               }
-              for(let e in lo[each]['Group']){
-                switch (parseInt(lo[each]['Group'][e]['id'])) {
+              if(lo[each]['groups']==='')continue
+              const gps = lo[each]['groups'].split(',')
+              for(let i in gps){
+                switch (parseInt(gps[i])) {
                   case 1:
                     newData['DEL'] = 'S'
                     break
@@ -112,8 +115,6 @@ export default {
                 }
               }
               if(newData['display'])dataSource.data.push(newData)
-
-
             }
           }
 

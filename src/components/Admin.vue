@@ -112,16 +112,19 @@ import {message} from "ant-design-vue";
 export default {
   name: "Admin",
   setup(){
-    let loginData = checkLogin.check()
-    let logon = false
-    if (loginData !== undefined) {
-      logon = true
-      if(loginData['Level']<12){
-        router.push('/')
-        message.error('权限不足')
-      }
-    } else {
-      localStorage.setItem('loginFirst', '0')
+    let asData = reactive({
+      EventList:[],
+      logon:false,
+      displayName:'未登录',
+      cid:'',
+      email:'',
+      groups:[]
+    });
+    let loginData = checkLogin.getLoginStatus()
+    if(loginData!==undefined){
+      asData.logon =true
+      asData.cid = loginData['Username']
+    }else {
       router.push('/login')
     }
     let ApplyData = reactive({

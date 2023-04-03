@@ -27,6 +27,11 @@ export default {
         var key = CryptoJS.enc.Utf8.parse(keyStr);
         var decrypt = CryptoJS.AES.decrypt(word, key, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 });
         return CryptoJS.enc.Utf8.stringify(decrypt).toString();
+    },
+
+    encryptReq(dataIn){
+
+        return {data:this.encrypt(JSON.stringify(dataIn))}
     }
 
 }

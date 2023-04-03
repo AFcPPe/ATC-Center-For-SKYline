@@ -64,13 +64,11 @@ export default {
   },
 
   setup() {
-    if(checkLogin.check()!=undefined){
-      router.push({path: '/',})
-    }
-    if(localStorage.getItem('loginFirst')=='0'){
-      message.error('请先登录')
-      localStorage.removeItem('loginFirst')
-    }
+    checkLogin.check().then(res=>{
+      if(res !== undefined){
+        router.push('/')
+      }
+    })
     const formState = reactive({
       username: '',
       password: '',
@@ -99,9 +97,7 @@ export default {
             console.log('data')
             if(res.data.code=='200'){
               localStorage.clear()
-              let saveData = AES.encrypt(JSON.stringify(res.data.data))
-              localStorage.setItem('loginData',saveData)
-              localStorage.setItem('banFlag','1')
+              localStorage.setItem('loginData',AES.encrypt(JSON.stringify({username:formState.username,password:formState.password,randomNum:Math.random()*114514})))
               location.reload()
             }else {
               message.error('登录失败');
