@@ -114,15 +114,10 @@ export default {
     if(loginData!==undefined){
       asData.logon =true
       asData.cid = loginData['Username']
-      APIs.LocalApi({url:'getUser',method:'post',data:AES.encryptReq({cid:asData.cid})}).then(r=>{
-        const packetData = r.data
-        if(packetData['code'] == 200){
-          const userData = packetData.data[0]
-          asData.displayName = userData.name
-          asData.email = userData.email
-          asData.groups = userData.groups.split(',')
-        }
-      })
+      const userData = JSON.parse(AES.decrypt(sessionStorage.getItem('ud')))
+      asData.displayName = userData.name
+      asData.email = userData.email
+      asData.groups = userData.groups.split(',')
     }else {
       router.push('/login')
     }
@@ -133,116 +128,117 @@ export default {
             if(res.data.code ==200&&res.data.data!==null){
               asData.eventData=res.data.data
               message.success('获取活动信息成功')
-              APIs.API({url:'atc_center_api/Controller/GetEventBooking.php',method:'get',params:{'id':asData.eventID}})
-                  .then(r=>{
-                    asData.ATCTypes = []
-                    if(r.data.code ==200&&r.data.data!==null){
-                      const seatData = r.data.data
-                      let CTRs = []
-                      let TMAs = []
-                      let TWRs = {}
-                      let OTHERs = []
-                      for(let each in seatData){
-                        if(seatData[each]['rating']==2){
-                          seatData[each]['id']=[3,8]
-                        }else if(seatData[each]['rating']==3){
-                          seatData[each]['id']=[8]
-                        }else if(seatData[each]['rating']==4){
-                          seatData[each]['id']=[4,9]
-                        }else if(seatData[each]['rating']==5){
-                          seatData[each]['id']=[9]
-                        }else if(seatData[each]['rating']==6){
-                          seatData[each]['id']=[5,10]
-                        }else if(seatData[each]['rating']==7){
-                          seatData[each]['id']=[10]
-                        }
-                        seatData[each]['avail']=false
-                        for(let e in asData.groups){
-                          for(let h in seatData[each]['id']){
-                            if(asData.groups[e]==seatData[each]['id'][h]){
-                              seatData[each]['avail']=true
-                            }
-                          }
-                        }
-                        if(seatData[each]['type']=='3'){
-                          CTRs.push(seatData[each])
-                        }else if(seatData[each]['type']=='2'){
-                          TMAs.push(seatData[each])
-                        }else if(seatData[each]['type']=='1'){
-                          let splStr = seatData[each]['name'].split('_')
-                          if(TWRs[splStr[0]] == undefined){
-                            TWRs[splStr[0]] = []
-                          }
-                          TWRs[splStr[0]].push(seatData[each])
-                        }else {
-                          OTHERs.push(seatData[each])
-                        }
-                      }
-                      asData.ATCList['CTR'] = []
-                      for(let i =0;i<CTRs.length;i++){
-                        let CTRRow = {
-                          key:i+1,
-                          callsign: CTRs[i]['name'],
-                          require:ratings[parseInt(CTRs[i]['rating'])],
-                          remark: CTRs[i]['remark'],
-                          datas:CTRs[i]
-                        }
-                        asData.ATCList['CTR'].push(CTRRow)
-                      }
-                      asData.ATCTypes.push({key:1,seat:'航路管制',seats:asData.ATCList['CTR']})
-                      asData.ATCList['TMA'] = []
-                      for(let i =0;i<TMAs.length;i++){
-                        let TMARow = {
-                          key:i+1,
-                          callsign: TMAs[i]['name'],
-                          require:ratings[parseInt(TMAs[i]['rating'])],
-                          remark: TMAs[i]['remark'],
-                          datas:TMAs[i]
-                        }
-                        asData.ATCList['TMA'].push(TMARow)
-                      }
-                      asData.ATCTypes.push({key:2,seat:'终端管制',seats:asData.ATCList['TMA']})
-                      let num =2
-                      for(let each in TWRs){
-                        asData.ATCList[each] = []
-                        let eachTWR = TWRs[each]
-                        for(let i =0;i<eachTWR.length;i++){
-                          let eachTWRRow = {
-                            key:i+1,
-                            callsign: eachTWR[i]['name'],
-                            require:ratings[parseInt(eachTWR[i]['rating'])],
-                            remark: eachTWR[i]['remark'],
-                            datas:eachTWR[i]
-                          }
-                          asData.ATCList[each].push(eachTWRRow)
-                        }
-                        num = num+1
-                        asData.ATCTypes.push({key:num,seat:each,seats:asData.ATCList[each]})
-                      }
-                      <asData className="ATCList"></asData>['OTHER']=[]
-                      for(let i =0;i<OTHERs.length;i++){
-                        if (parseInt(OTHERs[i]['rating'])>=12){
-                          continue
-                        }
-                        let OTHERsRow = {
-                          key:i+1,
-                          callsign: OTHERs[i]['name'],
-                          require:ratings[parseInt(OTHERs[i]['rating'])],
-                          remark: OTHERs[i]['remark'],
-                          datas:OTHERs[i]
-                        }
-                        asData.ATCList['OTHER'].push(OTHERsRow)
-                      }
-                      message.success('获取席位预约信息成功')
-                    }else{
-                      message.error('获取席位预约信息失败，很可能还没发布席位预约信息哦')
-                    }
-                  })
+
             }else{
               message.error('获取活动信息失败，正在返回活动页面')
               router.push('/activity')
             }
 
+          })
+      APIs.API({url:'atc_center_api/Controller/GetEventBooking.php',method:'get',params:{'id':asData.eventID}})
+          .then(r=>{
+            asData.ATCTypes = []
+            if(r.data.code ==200&&r.data.data!==null){
+              const seatData = r.data.data
+              let CTRs = []
+              let TMAs = []
+              let TWRs = {}
+              let OTHERs = []
+              for(let each in seatData){
+                if(seatData[each]['rating']==2){
+                  seatData[each]['id']=[3,8]
+                }else if(seatData[each]['rating']==3){
+                  seatData[each]['id']=[8]
+                }else if(seatData[each]['rating']==4){
+                  seatData[each]['id']=[4,9]
+                }else if(seatData[each]['rating']==5){
+                  seatData[each]['id']=[9]
+                }else if(seatData[each]['rating']==6){
+                  seatData[each]['id']=[5,10]
+                }else if(seatData[each]['rating']==7){
+                  seatData[each]['id']=[10]
+                }
+                seatData[each]['avail']=false
+                for(let e in asData.groups){
+                  for(let h in seatData[each]['id']){
+                    if(asData.groups[e]==seatData[each]['id'][h]){
+                      seatData[each]['avail']=true
+                    }
+                  }
+                }
+                if(seatData[each]['type']=='3'){
+                  CTRs.push(seatData[each])
+                }else if(seatData[each]['type']=='2'){
+                  TMAs.push(seatData[each])
+                }else if(seatData[each]['type']=='1'){
+                  let splStr = seatData[each]['name'].split('_')
+                  if(TWRs[splStr[0]] == undefined){
+                    TWRs[splStr[0]] = []
+                  }
+                  TWRs[splStr[0]].push(seatData[each])
+                }else {
+                  OTHERs.push(seatData[each])
+                }
+              }
+              asData.ATCList['CTR'] = []
+              for(let i =0;i<CTRs.length;i++){
+                let CTRRow = {
+                  key:i+1,
+                  callsign: CTRs[i]['name'],
+                  require:ratings[parseInt(CTRs[i]['rating'])],
+                  remark: CTRs[i]['remark'],
+                  datas:CTRs[i]
+                }
+                asData.ATCList['CTR'].push(CTRRow)
+              }
+              asData.ATCTypes.push({key:1,seat:'航路管制',seats:asData.ATCList['CTR']})
+              asData.ATCList['TMA'] = []
+              for(let i =0;i<TMAs.length;i++){
+                let TMARow = {
+                  key:i+1,
+                  callsign: TMAs[i]['name'],
+                  require:ratings[parseInt(TMAs[i]['rating'])],
+                  remark: TMAs[i]['remark'],
+                  datas:TMAs[i]
+                }
+                asData.ATCList['TMA'].push(TMARow)
+              }
+              asData.ATCTypes.push({key:2,seat:'终端管制',seats:asData.ATCList['TMA']})
+              let num =2
+              for(let each in TWRs){
+                asData.ATCList[each] = []
+                let eachTWR = TWRs[each]
+                for(let i =0;i<eachTWR.length;i++){
+                  let eachTWRRow = {
+                    key:i+1,
+                    callsign: eachTWR[i]['name'],
+                    require:ratings[parseInt(eachTWR[i]['rating'])],
+                    remark: eachTWR[i]['remark'],
+                    datas:eachTWR[i]
+                  }
+                  asData.ATCList[each].push(eachTWRRow)
+                }
+                num = num+1
+                asData.ATCTypes.push({key:num,seat:each,seats:asData.ATCList[each]})
+              }
+              <asData className="ATCList"></asData>['OTHER']=[]
+              for(let i =0;i<OTHERs.length;i++){
+                if (parseInt(OTHERs[i]['rating'])>=12){
+                  continue
+                }
+                let OTHERsRow = {
+                  key:i+1,
+                  callsign: OTHERs[i]['name'],
+                  require:ratings[parseInt(OTHERs[i]['rating'])],
+                  remark: OTHERs[i]['remark'],
+                  datas:OTHERs[i]
+                }
+                asData.ATCList['OTHER'].push(OTHERsRow)
+              }
+              message.success('获取席位预约信息成功')
+            }else{
+              message.error('获取席位预约信息失败，很可能还没发布席位预约信息哦')
+            }
           })
     }
     const submitPre = function (data) {

@@ -64,15 +64,10 @@ export default {
     }else {
       router.push('/login')
     }
-    APIs.LocalApi({url:'getUser',method:'post',data:AES.encryptReq({cid:asData.cid})}).then(r=>{
-      const packetData = r.data
-      if(packetData['code'] == 200){
-        const userData = packetData.data[0]
-        asData.displayName = userData.name
-        asData.email = userData.email
-        asData.groups = userData.groups.split(',')
-      }
-    })
+    const userData = JSON.parse(AES.decrypt(sessionStorage.getItem('ud')))
+    asData.displayName = userData.name
+    asData.email = userData.email
+    asData.groups = userData.groups.split(',')
     APIs.API({url:'atc_center_api/Controller/GetEventList.php',method:'get'})
         .then((res)=>{
           asData.EventList = res.data.data

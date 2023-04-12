@@ -137,6 +137,7 @@ export default defineComponent({
     const asData = reactive({
       logon:false,
       displayName:'未登录',
+      name:'',
       cid:'',
       email:'',
       groups:[]
@@ -149,18 +150,22 @@ export default defineComponent({
       }else{
         asData.logon = true
         asData.cid = res['Username']
+
         APIs.LocalApi({url:'getUser',method:'post',data:AES.encryptReq({cid:asData.cid})}).then(r=>{
           const packetData = r.data
           if(packetData['code'] == 200){
             const userData = packetData.data[0]
+            sessionStorage.setItem('ud',AES.encrypt(JSON.stringify(userData)))
             asData.displayName = userData.name
             asData.email = userData.email
+            asData.name = userData.name
             asData.groups = userData.groups.split(',')
           }
         })
       }
     })
     const handleChange = function (value){
+      asData.displayName = asData.name
       if(value=="usercenter"){
         router.push({path: '/usercenter',})
       }
