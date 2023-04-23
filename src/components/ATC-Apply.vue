@@ -35,6 +35,8 @@ import checkLogin from "@/utils/CheckLogin";
 import APIs from "@/utils/axios";
 import {message} from "ant-design-vue";
 import {reactive} from "vue";
+import AES from "@/utils/AES";
+import dayjs from "dayjs";
 
 const cols = [{
   title: '申请人',
@@ -66,39 +68,52 @@ export default {
     ReloadOutlined
   },
   setup() {
-    let loginData = checkLogin.check()
     let logon = false
+    let loginData = checkLogin.getLoginStatus()
     if(loginData!==undefined){
-      logon =true
+      logon=true
     }else {
-      localStorage.setItem('loginFirst','0')
       router.push('/login')
     }
     let ApplyData = reactive({
       list:[]
     })
     const refreshApplies=function () {
-      APIs.LocalApi({url:'getUserApply',method:'get',params:{'cid':loginData['Username']}})
+      APIs.LocalApi({url:'getUserApply',method:'post',data:AES.encryptReq({cid:loginData['Username']})})
           .then((res)=>{
-            if(res.status == 200){
+            if(res.data.code == 200){
               ApplyData.list=[]
-              let gData = res.data
+              let gData = res.data.data
               for(let i =0;i<gData.length;i++){
-                let stat = '未查阅'
-                if(gData[i]['progress']==1){
+                let stat = '未知'
+                if(gData[i]['check_result'] == null){
                   stat = '未查阅'
-                }else if(gData[i]['progress']==2){
-                  stat = '已通过'
-                }else if(gData[i]['progress']==3){
-                  stat = '已通过'
-                }else if(gData[i]['progress']==-1||gData[i]['progress']==-2){
-                  stat = '已拒绝'
+                }else{
+                  if(gData[i]['check_result'] == 1){
+                    if(gData[i]['interview_time']==null){
+                      stat = '等待分配面试时间'
+                    }else {
+                      if(gData[i]['interview_result']==null){
+                        stat = '等待面试'
+                      }else{
+                        if(gData[i]['interview_result']==2){
+                          stat = '面试未通过'
+                        }else if(gData[i]['interview_result']==1){
+                          stat = '已通过'
+                        }
+                      }
+                    }
+                  }else if(gData[i]['check_result'] == 2){
+                    stat = '已拒绝'
+                  }
+
                 }
+
                 let singleData = {
                   key:i+2,
-                  applicant:gData[i]['realname']+ ' (' + gData[i]['stu_id']+')',
-                  submitTime:gData[i]['submit_date'],
-                  dealTime: gData[i]['check_date'] == undefined?'无':gData[i]['check_date'],
+                  applicant:gData[i]['name']+ ' (' + gData[i]['cid']+')',
+                  submitTime:dayjs(gData[i]['submit_time']).format('YYYY-MM-DD HH:mm'),
+                  dealTime: gData[i]['check_date'] == undefined?'无':dayjs(gData[i]['check_date']).format('YYYY-MM-DD HH:mm'),
                   status: stat,
                   id:gData[i]['id']
                 }
@@ -114,9 +129,9 @@ export default {
       router.push({name:'detailedApply',params:{id:id}})
     }
     const deleteApply = function (id){
-      APIs.LocalApi({url:'deleteApply',method:'post',data: {id:id}})
+      APIs.LocalApi({url:'delApply',method:'post',data: AES.encryptReq({id:id})})
           .then(res=>{
-            if(res.status =='200'){
+            if(res.data.code =='200'){
               message.success('删除成功')
               refreshApplies()
             }

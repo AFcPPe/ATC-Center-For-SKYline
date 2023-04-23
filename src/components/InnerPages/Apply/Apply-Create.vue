@@ -54,11 +54,11 @@
         <a-col span="2"></a-col>
         <a-col span="10">
           <a-form :model="formState.list" @finish="onSubmitClick">
-            <a-form-item label="姓名" name="realname" :rules="[{required:true,message:'请填写姓名'}]">
-              <a-input v-model:value="formState.list.realname" style="width: 300px"></a-input>
+            <a-form-item label="姓名" name="name" :rules="[{required:true,message:'请填写姓名'}]">
+              <a-input v-model:value="formState.list.name" style="width: 300px"></a-input>
             </a-form-item>
-            <a-form-item label="邮箱" name="email" :rules="[{required:true,message:'请填写邮箱'}]">
-              <a-input v-model:value="formState.list.email" style="width: 300px"></a-input>
+            <a-form-item label="邮箱" name="mail" :rules="[{required:true,message:'请填写邮箱'}]">
+              <a-input v-model:value="formState.list.mail" style="width: 300px"></a-input>
             </a-form-item>
             <a-form-item label="QQ" name="qq" :rules="[{required:true,message:'请填写QQ'}]">
               <a-input v-model:value="formState.list.qq" style="width: 300px"></a-input>
@@ -66,11 +66,11 @@
             <a-form-item label="工作" name="job" :rules="[{required:true,message:'请填写工作'}]">
               <a-input v-model:value="formState.list.job" style="width: 300px"></a-input>
             </a-form-item>
-            <a-form-item label="预期在线时长(小时/周)" name="online_time" :rules="[{required:true,message:'请填写预期在线时长'}]">
-              <a-input v-model:value="formState.list.online_time" style="width: 100px"></a-input>
+            <a-form-item label="预期在线时长(小时/周)" name="ol_hour" :rules="[{required:true,message:'请填写预期在线时长'}]">
+              <a-input v-model:value="formState.list.ol_hour" style="width: 100px"></a-input>
             </a-form-item>
-            <a-form-item label="英语水平" name="language_skill" :rules="[{required:true,message:'请选择英语水平'}]">
-              <a-radio-group v-model:value="formState.list.language_skill">
+            <a-form-item label="英语水平" name="eng" :rules="[{required:true,message:'请选择英语水平'}]">
+              <a-radio-group v-model:value="formState.list.eng">
                 <a-radio :style="radioStyle" :value="1">1.几乎不懂英文</a-radio>
                 <a-radio :style="radioStyle" :value="2">2.粗通英文，了解一些英文飞行单词，借助文字和翻译器，可以进行英文陆空对话勉强能听懂和进行陆空对话</a-radio>
                 <a-radio :style="radioStyle" :value="3">3.能听懂大多数场景下的陆空对话，能用语音进行流利的英语对话除了熟练运用陆空对话外，还能使用英文处理一些非常规情景的对话。</a-radio>
@@ -80,11 +80,11 @@
             <a-form-item label="管制经验" name="atc_exp" :rules="[{required:true,message:'请填写管制经验'}]">
               <a-textarea v-model:value="formState.list.atc_exp" style="width: 500px"></a-textarea>
             </a-form-item>
-            <a-form-item label="飞行经历" name="pilot_exp" :rules="[{required:true,message:'请填写飞行经历'}]">
-              <a-textarea v-model:value="formState.list.pilot_exp" style="width: 500px"></a-textarea>
+            <a-form-item label="飞行经历" name="flight_exp" :rules="[{required:true,message:'请填写飞行经历'}]">
+              <a-textarea v-model:value="formState.list.flight_exp" style="width: 500px"></a-textarea>
             </a-form-item>
-            <a-form-item label="期望收获" name="expect" :rules="[{required:true,message:'请填写期望收获'}]">
-              <a-textarea v-model:value="formState.list.expect" style="width: 500px"></a-textarea>
+            <a-form-item label="期望收获" name="exp_hav" :rules="[{required:true,message:'请填写期望收获'}]">
+              <a-textarea v-model:value="formState.list.exp_hav" style="width: 500px"></a-textarea>
             </a-form-item>
             <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
               <a-button type="primary" html-type="submit">提交</a-button>
@@ -105,6 +105,8 @@ import router from "@/utils/router";
 import {Steps, Step, message} from "ant-design-vue"
 import {reactive} from "vue";
 import APIs from "@/utils/axios";
+import AES from "@/utils/AES";
+import dayjs from "dayjs";
 
 export default {
   name: "Apply-Create",
@@ -112,12 +114,9 @@ export default {
     Steps,Step
   },
   setup(){
-    let loginData = checkLogin.check()
-    let logon = false
+    let loginData = checkLogin.getLoginStatus()
     if(loginData!==undefined){
-      logon =true
     }else {
-      localStorage.setItem('loginFirst','0')
       router.push('/login')
     }
     const radioStyle = reactive({
@@ -125,28 +124,31 @@ export default {
     });
     const formState = reactive({
       list:{
-        'realname':'',
-        'email':'',
-        'qq':'',
-        'job':'',
-        'atc_exp':'',
-        'online_time':'',
-        'language_skill':'',
-        'pilot_exp':'',
-        'expect':'',
-        'stu_id':loginData['Username'],
-        'pilottime':loginData['Pilottime']
+        cid:loginData['Username'],
+        name:'',
+        mail:'',
+        qq:'',
+        job:'',
+        ol_hour:'',
+        eng:'',
+        atc_exp:'',
+        flight_exp:'',
+        exp_hav:'',
+        flight_time:loginData['Pilottime']/3600.0,
+        submit_time:0
       },
     });
+
     const onSubmitClick = function () {
       if(loginData==undefined||loginData['Pilottime']==undefined||loginData['Pilottime']/3600<45){
         message.error('提交失败，因为你的连飞时长小于45小时')
         router.push('/apply')
         return
       }
-      APIs.LocalApi({url:'createApply',method:'post',data:formState.list})
+      formState.list.submit_time = dayjs().add(8,'hour')
+      APIs.LocalApi({url:'createApply',method:'post',data:AES.encryptReq(formState.list)})
           .then((res)=>{
-            if(res.status =='200'){
+            if(res.data.code =='200'){
               message.success('提交成功')
               router.push('/apply')
             }else {
